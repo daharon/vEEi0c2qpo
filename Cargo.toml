@@ -1,0 +1,10 @@
+[package]
+name = "order-book-merger"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+futures-util = "0.3.19"
+url = "2.2.2"
+tokio-tungstenite = { version = "0.16.1", features = ["native-tls"] } # Websockets
