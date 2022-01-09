@@ -1,8 +1,8 @@
 use std::error::Error;
 
-use crate::common::OrderBookEntry;
+use crate::common::{order_book_entries_to_rpc_levels, OrderBookEntry};
 use crate::exchange::Exchange;
-use crate::OrderBook;
+use crate::{rpc, OrderBook};
 use async_trait::async_trait;
 use serde::Deserialize;
 use tokio::net::TcpStream;
@@ -27,10 +27,14 @@ pub struct BinanceOrderBookMessage {
 
 impl Into<OrderBook> for BinanceOrderBookMessage {
     fn into(self) -> OrderBook {
+        let mut bids = order_book_entries_to_rpc_levels(EXCHANGE_NAME, self.bids);
+        bids.sort_by(|a, b| b.price.partial_cmp(&a.price).unwrap());
+        let mut asks = order_book_entries_to_rpc_levels(EXCHANGE_NAME, self.asks);
+        asks.sort_by(|a, b| a.price.partial_cmp(&b.price).unwrap());
         OrderBook {
             exchange: EXCHANGE_NAME,
-            bids: self.bids,
-            asks: self.asks,
+            bids,
+            asks,
         }
     }
 }

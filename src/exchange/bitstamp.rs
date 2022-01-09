@@ -1,4 +1,4 @@
-use crate::common::OrderBookEntry;
+use crate::common::{order_book_entries_to_rpc_levels, OrderBookEntry};
 use crate::exchange::Exchange;
 use crate::OrderBook;
 use async_trait::async_trait;
@@ -48,10 +48,14 @@ where
 
 impl Into<OrderBook> for BitstampOrderBookMessage {
     fn into(self) -> OrderBook {
+        let mut bids = order_book_entries_to_rpc_levels(EXCHANGE_NAME, self.data.bids);
+        bids.sort_by(|a, b| b.price.partial_cmp(&a.price).unwrap());
+        let mut asks = order_book_entries_to_rpc_levels(EXCHANGE_NAME, self.data.asks);
+        asks.sort_by(|a, b| a.price.partial_cmp(&b.price).unwrap());
         OrderBook {
             exchange: EXCHANGE_NAME,
-            bids: self.data.bids,
-            asks: self.data.asks,
+            bids,
+            asks,
         }
     }
 }

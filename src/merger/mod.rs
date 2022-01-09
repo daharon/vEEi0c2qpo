@@ -19,8 +19,12 @@ impl OrderBookMerger {
         tx: broadcast::Sender<String>,
         mut rx: mpsc::Receiver<OrderBook>,
     ) {
-        while let Some(order_book) = rx.recv().await {
+        while let Some(mut order_book) = rx.recv().await {
             let exchange_name = order_book.exchange.clone();
+            // Truncate the bids and asks.
+            order_book.bids.truncate(NUM_ORDER_BOOK_ENTRIES);
+            order_book.asks.truncate(NUM_ORDER_BOOK_ENTRIES);
+
             self.order_books.insert(exchange_name, order_book);
             println!("{:?}", self.order_books.get(exchange_name));
 

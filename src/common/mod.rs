@@ -1,3 +1,4 @@
+use crate::rpc;
 use serde::{Deserialize, Deserializer};
 use std::str::FromStr;
 
@@ -5,8 +6,8 @@ use std::str::FromStr;
 #[derive(Debug)]
 pub struct OrderBook {
     pub exchange: &'static str,
-    pub bids: Vec<OrderBookEntry>,
-    pub asks: Vec<OrderBookEntry>,
+    pub bids: Vec<rpc::Level>,
+    pub asks: Vec<rpc::Level>,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -35,4 +36,18 @@ where
         })
         .collect();
     Ok(entries)
+}
+
+pub fn order_book_entries_to_rpc_levels(
+    exchange_name: &str,
+    entries: Vec<OrderBookEntry>,
+) -> Vec<rpc::Level> {
+    entries
+        .iter()
+        .map(|entry| rpc::Level {
+            exchange: exchange_name.to_string(),
+            price: entry.price,
+            amount: entry.quantity,
+        })
+        .collect()
 }

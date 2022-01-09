@@ -1,8 +1,12 @@
 use crate::common::OrderBook;
 use crate::exchange::Exchange;
 use crate::merger::OrderBookMerger;
+use std::process::exit;
 use tokio::sync::{broadcast, mpsc};
 
+mod rpc {
+    tonic::include_proto!("orderbook");
+}
 mod common;
 mod exchange;
 mod merger;
@@ -11,6 +15,13 @@ const TRADING_PAIR: &str = "ethbtc";
 
 #[tokio::main]
 async fn main() {
+    // TODO: Remove this.
+    let test = rpc::Level {
+        exchange: "test-exchange".to_string(),
+        price: 0.12345,
+        amount: 1.0,
+    };
+    println!("{:?}", test);
     // Start the exchange readers and receive a stream of order-books.
     let order_books_rx = start_exchange_readers().await;
 
