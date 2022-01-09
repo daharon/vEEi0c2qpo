@@ -607,6 +607,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "futures-util",
+ "itertools",
  "prost",
  "serde",
  "serde_json",

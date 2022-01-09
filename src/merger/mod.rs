@@ -1,6 +1,9 @@
-use crate::{proto, OrderBook};
 use std::collections::HashMap;
+
+use itertools::Itertools;
 use tokio::sync::{broadcast, mpsc};
+
+use crate::{OrderBook, proto};
 
 /// The number of order book entries to keep for processing.
 /// Set it to 10 since that is the output of the gRPC stream.
@@ -32,21 +35,31 @@ impl OrderBookMerger {
             eprintln!("{:?}", self.order_books.get(exchange_name));
 
             // Merge the order books and send to the broadcast channel.
-            let binance_bids = match self.order_books.get("binance") {
-                None => continue,
-                Some(order_book) => order_book.bids.clone(),
-            };
-            let bitstamp_asks = match self.order_books.get("bitstamp") {
-                None => continue,
-                Some(order_book) => order_book.asks.clone(),
-            };
-            let spread = bitstamp_asks.first().unwrap().price - binance_bids.first().unwrap().price;
+            let bids: Vec<proto::Level> = self
+                .order_books
+                .values()
+                .fold(vec![], |mut acc, v| {
+                    acc.append(&mut v.bids.clone());
+                    acc
+                })
+                .into_iter()
+                .sorted_by(|a, b| b.price.partial_cmp(&a.price).unwrap())
+                .take(NUM_ORDER_BOOK_ENTRIES)
+                .collect();
+            let asks: Vec<proto::Level> = self
+                .order_books
+                .values()
+                .fold(vec![], |mut acc, v| {
+                    acc.append(&mut v.asks.clone());
+                    acc
+                })
+                .into_iter()
+                .sorted_by(|a, b| a.price.partial_cmp(&b.price).unwrap())
+                .take(NUM_ORDER_BOOK_ENTRIES)
+                .collect();
+            let spread = asks.first().unwrap().price - bids.first().unwrap().price;
 
-            let merged_books = proto::Summary {
-                spread,
-                bids: binance_bids,
-                asks: bitstamp_asks,
-            };
+            let merged_books = proto::Summary { spread, bids, asks };
 
             tx.send(merged_books);
         }
