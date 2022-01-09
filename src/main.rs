@@ -18,20 +18,13 @@ const TRADING_PAIR: &str = "ethbtc";
 
 #[tokio::main]
 async fn main() {
-    // TODO: Remove this.
-    let test = proto::Level {
-        exchange: "test-exchange".to_string(),
-        price: 0.12345,
-        amount: 1.0,
-    };
-    println!("{:?}", test);
     // Start the exchange readers and receive a stream of order-books.
     let order_books_rx = start_exchange_readers().await;
 
     // Start the order-book merger coroutine.
-    let (merged_tx, mut merged_rx) = broadcast::channel(100);
+    let (merged_tx, _) = broadcast::channel(100);
     let mtx = merged_tx.clone();
-    let merger = tokio::spawn(async move {
+    tokio::spawn(async move {
         OrderBookMerger::default().start(mtx, order_books_rx).await;
     });
 

@@ -9,11 +9,11 @@ use crate::proto;
 
 pub struct OrderbookAggregatorService {
     /// Subscribe to this broadcast channel for the merged order-book stream.
-    broadcast_tx: broadcast::Sender<String>,
+    broadcast_tx: broadcast::Sender<proto::Summary>,
 }
 
 impl OrderbookAggregatorService {
-    pub fn new(channel: broadcast::Sender<String>) -> Self {
+    pub fn new(channel: broadcast::Sender<proto::Summary>) -> Self {
         Self {
             broadcast_tx: channel,
         }
@@ -34,24 +34,8 @@ impl OrderbookAggregator for OrderbookAggregatorService {
         let mut merged_order_books = self.broadcast_tx.subscribe();
 
         tokio::spawn(async move {
-            let mut counter = 0.0;
-            while let Ok(msg) = merged_order_books.recv().await {
-                // TODO:  Populate with real data.
-                let summary = proto::Summary {
-                    spread: 0.0,
-                    bids: vec![proto::Level {
-                        exchange: msg.to_string(),
-                        price: counter,
-                        amount: counter + 1.0,
-                    }],
-                    asks: vec![proto::Level {
-                        exchange: msg.to_string(),
-                        price: counter,
-                        amount: counter + 1.0,
-                    }],
-                };
+            while let Ok(summary) = merged_order_books.recv().await {
                 tx.send(Ok(summary)).await;
-                counter += 0.0001;
             }
         });
 
