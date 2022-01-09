@@ -2,7 +2,7 @@ use std::error::Error;
 
 use crate::common::{order_book_entries_to_rpc_levels, OrderBookEntry};
 use crate::exchange::Exchange;
-use crate::{rpc, OrderBook};
+use crate::OrderBook;
 use async_trait::async_trait;
 use serde::Deserialize;
 use tokio::net::TcpStream;

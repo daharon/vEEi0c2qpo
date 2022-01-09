@@ -1,22 +1,25 @@
 use crate::common::OrderBook;
 use crate::exchange::Exchange;
 use crate::merger::OrderBookMerger;
-use std::process::exit;
+use crate::rpc::server::OrderbookAggregatorService;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use tokio::sync::{broadcast, mpsc};
+use tonic::transport::Server;
 
-mod rpc {
+mod proto {
     tonic::include_proto!("orderbook");
 }
 mod common;
 mod exchange;
 mod merger;
+mod rpc;
 
 const TRADING_PAIR: &str = "ethbtc";
 
 #[tokio::main]
 async fn main() {
     // TODO: Remove this.
-    let test = rpc::Level {
+    let test = proto::Level {
         exchange: "test-exchange".to_string(),
         price: 0.12345,
         amount: 1.0,
@@ -32,11 +35,14 @@ async fn main() {
         OrderBookMerger::default().start(mtx, order_books_rx).await;
     });
 
-    let mut subscription = merged_tx.subscribe();
-    while let Ok(merged_order_book) = subscription.recv().await {
-        println!("Received merge order-book:  {}", merged_order_book);
-    }
-    //merger.await;
+    // Start the gRPC service.
+    println!("Staring gRPC server...");
+    let orderbook_aggregator_service = OrderbookAggregatorService::new(merged_tx);
+    let service = proto::orderbook_aggregator_server::OrderbookAggregatorServer::new(
+        orderbook_aggregator_service,
+    );
+    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080);
+    Server::builder().add_service(service).serve(addr).await;
 }
 
 /// Start the exchange websocket readers.
