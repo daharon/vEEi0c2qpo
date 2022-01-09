@@ -1,5 +1,6 @@
 use crate::common::OrderBookEntry;
 use crate::exchange::Exchange;
+use crate::OrderBook;
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use core::str::FromStr;
@@ -13,6 +14,7 @@ use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 use url::Url;
 
+static EXCHANGE_NAME: &str = "bitstamp";
 const STREAM_ENDPOINT: &str = "wss://ws.bitstamp.net/";
 
 pub struct Bitstamp;
@@ -44,9 +46,13 @@ where
     Ok(DateTime::from_utc(ndt, Utc))
 }
 
-impl Into<String> for BitstampOrderBookMessage {
-    fn into(self) -> String {
-        format!("{:?}", self).to_string()
+impl Into<OrderBook> for BitstampOrderBookMessage {
+    fn into(self) -> OrderBook {
+        OrderBook {
+            exchange: EXCHANGE_NAME,
+            bids: self.data.bids,
+            asks: self.data.asks,
+        }
     }
 }
 

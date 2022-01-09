@@ -2,12 +2,14 @@ use std::error::Error;
 
 use crate::common::OrderBookEntry;
 use crate::exchange::Exchange;
+use crate::OrderBook;
 use async_trait::async_trait;
 use serde::Deserialize;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 use url::Url;
 
+static EXCHANGE_NAME: &str = "binance";
 const STREAM_ENDPOINT: &str = "wss://stream.binance.com:9443/ws/";
 const STREAM_SUFFIX: &str = "@depth10@100ms";
 
@@ -23,9 +25,13 @@ pub struct BinanceOrderBookMessage {
     pub asks: Vec<OrderBookEntry>,
 }
 
-impl Into<String> for BinanceOrderBookMessage {
-    fn into(self) -> String {
-        format!("{:?}", self).to_string()
+impl Into<OrderBook> for BinanceOrderBookMessage {
+    fn into(self) -> OrderBook {
+        OrderBook {
+            exchange: EXCHANGE_NAME,
+            bids: self.bids,
+            asks: self.asks,
+        }
     }
 }
 

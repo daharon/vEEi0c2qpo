@@ -1,6 +1,14 @@
 use serde::{Deserialize, Deserializer};
 use std::str::FromStr;
 
+/// Generic order-book.
+#[derive(Debug)]
+pub struct OrderBook {
+    pub exchange: &'static str,
+    pub bids: Vec<OrderBookEntry>,
+    pub asks: Vec<OrderBookEntry>,
+}
+
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct OrderBookEntry {
     pub price: f64,

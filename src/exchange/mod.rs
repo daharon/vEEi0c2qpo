@@ -1,3 +1,4 @@
+use crate::common::OrderBook;
 use async_trait::async_trait;
 use futures_util::{SinkExt, StreamExt};
 use std::error::Error;
@@ -11,7 +12,7 @@ pub mod bitstamp;
 
 #[async_trait]
 pub trait Exchange {
-    type OrderBookMessage: for<'a> serde::Deserialize<'a> + Into<String> + Send;
+    type OrderBookMessage: for<'a> serde::Deserialize<'a> + Into<OrderBook> + Send;
 
     /// Exchange-specific logic to connect to the exchange's websocket
     /// and subscribe to the appropriate order book stream.
@@ -20,7 +21,10 @@ pub trait Exchange {
     ) -> Result<WebSocketStream<MaybeTlsStream<TcpStream>>, Box<dyn Error>>;
 
     /// Connect and read from the exchange's websocket stream.
-    async fn start(trading_pair: &str, sink: mpsc::Sender<String>) -> Result<(), Box<dyn Error>> {
+    async fn start(
+        trading_pair: &str,
+        sink: mpsc::Sender<OrderBook>,
+    ) -> Result<(), Box<dyn Error>> {
         let (mut tx, mut rx) = Self::connect(trading_pair).await?.split();
 
         // Read from the stream.
@@ -43,7 +47,7 @@ pub trait Exchange {
                                     );
                                 }
                             }
-                        };
+                        }
                     }
                     Message::Ping(_) => {
                         eprintln!("Received PING.  Sending PONG.");
