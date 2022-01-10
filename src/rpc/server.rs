@@ -35,7 +35,7 @@ impl OrderbookAggregator for OrderbookAggregatorService {
 
         tokio::spawn(async move {
             while let Ok(summary) = merged_order_books.recv().await {
-                tx.send(Ok(summary)).await.unwrap();
+                tx.send(Ok(summary)).await.unwrap_or(());
             }
         });
 

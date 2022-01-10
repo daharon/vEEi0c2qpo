@@ -1,3 +1,5 @@
+pub mod config;
+
 use crate::proto;
 use serde::{Deserialize, Deserializer};
 use std::str::FromStr;

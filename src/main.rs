@@ -1,11 +1,12 @@
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::SocketAddr;
 
 use tokio::sync::{broadcast, mpsc};
 use tonic::transport::Server;
 
-use crate::common::OrderBook;
+use crate::common::{config::Config, OrderBook};
 use crate::exchange::Exchange;
 use crate::merger::OrderBookMerger;
+use crate::proto::orderbook_aggregator_server::OrderbookAggregatorServer;
 use crate::rpc::server::OrderbookAggregatorService;
 
 mod proto {
@@ -16,12 +17,12 @@ mod exchange;
 mod merger;
 mod rpc;
 
-const TRADING_PAIR: &str = "ethbtc";
-
 #[tokio::main]
 async fn main() {
+    let config = Config::new();
+
     // Start the exchange readers and receive a stream of order-books.
-    let order_books_rx = start_exchange_readers().await;
+    let order_books_rx = start_exchange_readers(&config.symbol.to_lowercase()).await;
 
     // Start the order-book merger coroutine.
     let (merged_tx, _) = broadcast::channel(100);
@@ -33,10 +34,8 @@ async fn main() {
     // Start the gRPC service.
     println!("Staring gRPC server...");
     let orderbook_aggregator_service = OrderbookAggregatorService::new(merged_tx);
-    let service = proto::orderbook_aggregator_server::OrderbookAggregatorServer::new(
-        orderbook_aggregator_service,
-    );
-    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080);
+    let service = OrderbookAggregatorServer::new(orderbook_aggregator_service);
+    let addr = SocketAddr::new(config.host, config.port);
     Server::builder()
         .add_service(service)
         .serve(addr)
@@ -46,18 +45,20 @@ async fn main() {
 
 /// Start the exchange websocket readers.
 /// Returns a live stream of order-books.
-async fn start_exchange_readers() -> mpsc::Receiver<OrderBook> {
+async fn start_exchange_readers(trading_symbol: &str) -> mpsc::Receiver<OrderBook> {
     let (tx, rx) = mpsc::channel(100);
 
     let binance_sender = tx.clone();
+    let symbol = trading_symbol.to_string();
     let _binance_stream = tokio::spawn(async move {
-        exchange::binance::Binance::start(TRADING_PAIR, binance_sender)
+        exchange::binance::Binance::start(&symbol, binance_sender)
             .await
             .expect("Binance stream failed to start.");
     });
     let bitstamp_sender = tx.clone();
+    let symbol = trading_symbol.to_string();
     let _bitstamp_stream = tokio::spawn(async move {
-        exchange::bitstamp::Bitstamp::start(TRADING_PAIR, bitstamp_sender)
+        exchange::bitstamp::Bitstamp::start(&symbol, bitstamp_sender)
             .await
             .expect("Bitstamp stream failed to start.");
     });

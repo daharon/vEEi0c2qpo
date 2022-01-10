@@ -4,8 +4,8 @@ use async_trait::async_trait;
 use futures_util::{SinkExt, StreamExt};
 use tokio::net::TcpStream;
 use tokio::sync::mpsc;
-use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 use tokio_tungstenite::tungstenite::Message;
+use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 
 use crate::common::OrderBook;
 
@@ -24,10 +24,10 @@ pub trait Exchange {
 
     /// Connect and read from the exchange's websocket stream.
     async fn start(
-        trading_pair: &str,
+        trading_symbol: &str,
         sink: mpsc::Sender<OrderBook>,
     ) -> Result<(), Box<dyn Error>> {
-        let (mut tx, mut rx) = Self::connect(trading_pair).await?.split();
+        let (mut tx, mut rx) = Self::connect(trading_symbol).await?.split();
 
         // Read from the stream.
         while let Some(message) = rx.next().await {

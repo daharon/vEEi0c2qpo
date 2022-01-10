@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use itertools::Itertools;
 use tokio::sync::{broadcast, mpsc};
 
-use crate::{OrderBook, proto};
+use crate::{proto, OrderBook};
 
 /// The number of order book entries to keep for processing.
 /// Set it to 10 since that is the output of the gRPC stream.
@@ -60,7 +60,7 @@ impl OrderBookMerger {
             let spread = asks.first().unwrap().price - bids.first().unwrap().price;
 
             let merged_books = proto::Summary { spread, bids, asks };
-            tx.send(merged_books).unwrap();
+            tx.send(merged_books).unwrap_or(0);
         }
     }
 }
