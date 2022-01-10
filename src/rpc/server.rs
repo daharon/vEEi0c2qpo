@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use log::info;
 use tokio::sync::{broadcast, mpsc};
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Request, Response, Status};
@@ -28,7 +29,7 @@ impl OrderbookAggregator for OrderbookAggregatorService {
         &self,
         request: Request<proto::Empty>,
     ) -> Result<Response<Self::BookSummaryStream>, Status> {
-        eprintln!("Client connected from {:?}", request.remote_addr());
+        info!("Client connected from {:?}", request.remote_addr());
 
         let (tx, rx) = mpsc::channel(10);
         let mut merged_order_books = self.broadcast_tx.subscribe();
@@ -37,6 +38,7 @@ impl OrderbookAggregator for OrderbookAggregatorService {
             while let Ok(summary) = merged_order_books.recv().await {
                 tx.send(Ok(summary)).await.unwrap_or(());
             }
+            info!("Client disconnected from {:?}", request.remote_addr())
         });
 
         Ok(Response::new(ReceiverStream::new(rx)))

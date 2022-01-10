@@ -6,6 +6,7 @@ pub struct Config {
     pub symbol: String,
     pub host: IpAddr,
     pub port: u16,
+    pub log_level: log::LevelFilter,
 }
 
 impl Config {
@@ -14,6 +15,15 @@ impl Config {
             .about("Order Book Merger")
             .version(crate_version!())
             .author("Dan Aharon <dan@aharon.dev>")
+            .arg(
+                Arg::with_name("log-level")
+                    .short("l")
+                    .long("log-level")
+                    .help("Log level (TRACE, DEBUG, ERROR, WARN, INFO).")
+                    .takes_value(true)
+                    .default_value("info")
+                    .value_name("LEVEL"),
+            )
             .arg(
                 Arg::with_name("host")
                     .short("h")
@@ -42,7 +52,13 @@ impl Config {
         let symbol = value_t_or_exit!(matches.value_of("SYMBOL"), String);
         let host = value_t_or_exit!(matches.value_of("host"), IpAddr);
         let port = value_t_or_exit!(matches.value_of("port"), u16);
+        let log_level = value_t_or_exit!(matches.value_of("log-level"), log::LevelFilter);
 
-        Self { symbol, host, port }
+        Self {
+            symbol,
+            host,
+            port,
+            log_level,
+        }
     }
 }

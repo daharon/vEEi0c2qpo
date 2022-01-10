@@ -1,5 +1,7 @@
 use std::net::SocketAddr;
 
+use log::info;
+use simplelog::SimpleLogger;
 use tokio::sync::{broadcast, mpsc};
 use tonic::transport::Server;
 
@@ -20,6 +22,8 @@ mod rpc;
 #[tokio::main]
 async fn main() {
     let config = Config::new();
+    SimpleLogger::init(config.log_level, simplelog::Config::default())
+        .expect("Failed to initialize logging.");
 
     // Start the exchange readers and receive a stream of order-books.
     let order_books_rx = start_exchange_readers(&config.symbol.to_lowercase()).await;
@@ -32,7 +36,7 @@ async fn main() {
     });
 
     // Start the gRPC service.
-    println!("Staring gRPC server...");
+    info!("Staring gRPC server...");
     let orderbook_aggregator_service = OrderbookAggregatorService::new(merged_tx);
     let service = OrderbookAggregatorServer::new(orderbook_aggregator_service);
     let addr = SocketAddr::new(config.host, config.port);

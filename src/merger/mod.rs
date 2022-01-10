@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use itertools::Itertools;
+use log::debug;
 use tokio::sync::{broadcast, mpsc};
 
 use crate::{proto, OrderBook};
@@ -32,7 +33,7 @@ impl OrderBookMerger {
 
             // Update the order-book state.
             self.order_books.insert(exchange_name, order_book);
-            eprintln!("{:?}", self.order_books.get(exchange_name));
+            debug!("{:?}", self.order_books.get(exchange_name));
 
             // Merge the order books and send to the broadcast channel.
             let bids: Vec<proto::Level> = self
