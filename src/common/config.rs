@@ -28,7 +28,7 @@ impl Config {
                 Arg::with_name("host")
                     .short("h")
                     .long("host")
-                    .help("Host name or IP address to listen on")
+                    .help("IP address to listen on")
                     .takes_value(true)
                     .value_name("HOSTNAME")
                     .default_value("127.0.0.1"),

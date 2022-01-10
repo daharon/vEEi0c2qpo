@@ -116,7 +116,7 @@ fn subscription_request(trading_pair: &str) -> String {
 mod tests {
     use super::{BitstampOrderBookMessage, BitstampOrderBookMessageData};
     use crate::common::OrderBookEntry;
-    use chrono::{DateTime, TimeZone};
+    use chrono::TimeZone;
 
     #[test]
     fn deserialize_order_book_message() {

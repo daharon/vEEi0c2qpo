@@ -36,7 +36,7 @@ async fn main() {
     });
 
     // Start the gRPC service.
-    info!("Staring gRPC server...");
+    info!("Staring gRPC server on {}:{}...", config.host, config.port);
     let orderbook_aggregator_service = OrderbookAggregatorService::new(merged_tx);
     let service = OrderbookAggregatorServer::new(orderbook_aggregator_service);
     let addr = SocketAddr::new(config.host, config.port);
