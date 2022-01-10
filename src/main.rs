@@ -1,10 +1,12 @@
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+
+use tokio::sync::{broadcast, mpsc};
+use tonic::transport::Server;
+
 use crate::common::OrderBook;
 use crate::exchange::Exchange;
 use crate::merger::OrderBookMerger;
 use crate::rpc::server::OrderbookAggregatorService;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use tokio::sync::{broadcast, mpsc};
-use tonic::transport::Server;
 
 mod proto {
     tonic::include_proto!("orderbook");
@@ -35,7 +37,11 @@ async fn main() {
         orderbook_aggregator_service,
     );
     let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080);
-    Server::builder().add_service(service).serve(addr).await;
+    Server::builder()
+        .add_service(service)
+        .serve(addr)
+        .await
+        .expect("Failed to start the gRPC server.");
 }
 
 /// Start the exchange websocket readers.

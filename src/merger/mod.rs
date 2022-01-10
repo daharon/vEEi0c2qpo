@@ -60,8 +60,7 @@ impl OrderBookMerger {
             let spread = asks.first().unwrap().price - bids.first().unwrap().price;
 
             let merged_books = proto::Summary { spread, bids, asks };
-
-            tx.send(merged_books);
+            tx.send(merged_books).unwrap();
         }
     }
 }

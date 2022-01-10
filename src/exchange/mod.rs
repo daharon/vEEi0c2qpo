@@ -1,11 +1,13 @@
-use crate::common::OrderBook;
+use std::error::Error;
+
 use async_trait::async_trait;
 use futures_util::{SinkExt, StreamExt};
-use std::error::Error;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc;
-use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
+use tokio_tungstenite::tungstenite::Message;
+
+use crate::common::OrderBook;
 
 pub mod binance;
 pub mod bitstamp;
@@ -51,7 +53,7 @@ pub trait Exchange {
                     }
                     Message::Ping(_) => {
                         eprintln!("Received PING.  Sending PONG.");
-                        tx.send(Message::Pong(vec![0; 0])).await;
+                        tx.send(Message::Pong(vec![0; 0])).await.unwrap();
                     }
                     Message::Pong(_) => eprintln!("Received PONG."),
                     Message::Binary(_) => eprintln!("Skipping binary message handling."),
