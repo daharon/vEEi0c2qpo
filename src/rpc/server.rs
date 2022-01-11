@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use log::info;
+use tokio::sync::mpsc::error::TrySendError::{Closed, Full};
 use tokio::sync::{broadcast, mpsc};
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Request, Response, Status};
@@ -36,7 +37,15 @@ impl OrderbookAggregator for OrderbookAggregatorService {
 
         tokio::spawn(async move {
             while let Ok(summary) = merged_order_books.recv().await {
-                tx.send(Ok(summary)).await.unwrap_or(());
+                match tx.try_send(Ok(summary)) {
+                    Ok(_) => { /* Pass */ }
+                    Err(err) => match err {
+                        // The receiver channel is full.
+                        Full(_) => continue,
+                        // The client has disconnected.
+                        Closed(_) => break,
+                    },
+                }
             }
             info!("Client disconnected from {:?}", request.remote_addr())
         });

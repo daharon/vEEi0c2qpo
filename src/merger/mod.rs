@@ -44,6 +44,7 @@ impl OrderBookMerger {
                     acc
                 })
                 .into_iter()
+                // Sort bids by descending price.
                 .sorted_by(|a, b| b.price.partial_cmp(&a.price).unwrap())
                 .take(NUM_ORDER_BOOK_ENTRIES)
                 .collect();
@@ -55,6 +56,7 @@ impl OrderBookMerger {
                     acc
                 })
                 .into_iter()
+                // Sort asks by ascending price.
                 .sorted_by(|a, b| a.price.partial_cmp(&b.price).unwrap())
                 .take(NUM_ORDER_BOOK_ENTRIES)
                 .collect();
